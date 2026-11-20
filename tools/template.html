@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f2f4f8;
+    --surface: #ffffff;
+    --soft: #e9ecf2;
+    --text: #15181d;
+    --muted: #5c6370;
+    --accent: #2a3fe5;
+    --on-accent: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181d;
+      --surface: #23262e;
+      --soft: #2e323b;
+      --text: #e9ebf0;
+      --muted: #9aa2af;
+      --accent: #a0abff;
+      --on-accent: #11131a;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font: 0.88em ui-monospace, Menlo, monospace; background: var(--soft); padding: 1px 5px; border-radius: 5px; }
+  button, select { font: inherit; color: inherit; }
+  button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .sheet { max-width: 860px; margin: 24px auto 72px; padding: 40px 48px 56px; background: var(--surface); border-radius: 24px; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.14; letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: 15px; }
+  .badge { flex: none; background: var(--soft); border-radius: 99px; padding: 5px 14px; font-size: 14px; font-weight: 500; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0 36px; }
+  .pills { display: inline-flex; gap: 2px; background: var(--soft); padding: 3px; border-radius: 99px; }
+  .pills button { border: 0; background: transparent; color: var(--muted); border-radius: 99px; padding: 6px 16px; font-size: 15px; font-weight: 500; cursor: pointer; }
+  .pills button:hover { color: var(--text); }
+  .pills button[aria-selected="true"], .pills button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(21, 24, 29, 0.14); }
+  .pill-link { background: var(--soft); border-radius: 99px; padding: 9px 16px; font-size: 15px; font-weight: 500; line-height: 1.2; color: var(--text); }
+  .pill-link:hover { text-decoration: none; background: var(--accent); color: var(--on-accent); }
+
+  .part { margin-top: 44px; }
+  .part.lead { margin-top: 0; font-size: 21px; line-height: 1.5; letter-spacing: -0.005em; }
+  .part.lead p { margin: 0 0 12px; }
+  h2 { font-size: 24px; line-height: 1.25; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 20px; }
+  h3 { font-size: 20px; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  blockquote { margin: 16px 0; font-size: 19px; line-height: 1.45; color: var(--muted); }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 12px 48px; margin: 0 0 32px; }
+  .stats div { display: flex; flex-direction: column; }
+  .stats dd { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .stats dt { font-size: 15px; color: var(--muted); }
+
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin: 0; }
+  .facts div { background: var(--soft); border-radius: 14px; padding: 12px 16px; }
+  .facts dt { font-size: 14px; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+
+  .num { font-size: 14px; line-height: 1.8; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .numbered { list-style: none; padding: 0; margin: 0; }
+  .numbered li { display: grid; grid-template-columns: 40px 1fr; margin-bottom: 14px; }
+  .tag { display: inline-block; font-size: 13px; line-height: 1.5; font-weight: 600; background: var(--soft); padding: 1px 8px; border-radius: 99px; margin-right: 2px; }
+
+  .tc { font-size: 14px; line-height: 1.8; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .block { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 0 12px; margin-bottom: 40px; }
+  .block-side { display: flex; flex-direction: column; align-items: flex-start; padding-top: 2px; }
+  .block-main { min-width: 0; }
+  .shots { margin: 18px 0; }
+  .shots-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  figure { margin: 0; }
+  .shot { display: block; width: 100%; padding: 0; border: 0; background: var(--soft); border-radius: 12px; overflow: hidden; cursor: zoom-in; }
+  .shot img { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 14px; line-height: 1.4; color: var(--muted); margin-top: 6px; }
+  .skip { background: var(--soft); color: var(--muted); font-size: 14px; padding: 8px 14px; border-radius: 10px; margin: 16px 0; }
+
+  .chat-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .chat-text { background: var(--soft); border-radius: 16px; padding: 20px 22px; font: 15px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+  .copy { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 9px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+  dialog { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.9); }
+  dialog img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: zoom-out; }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; background: var(--surface); }
+    .sheet { margin: 0; padding: 24px 16px 56px; border-radius: 0; }
+    .top { flex-direction: column-reverse; gap: 10px; }
+    .part.lead { font-size: 19px; }
+    .stats { gap: 12px 28px; }
+    .stats dd { font-size: 32px; }
+    .block { grid-template-columns: minmax(0, 1fr); }
+    .block-side { flex-direction: row; gap: 12px; }
+    .shots-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+<article class="sheet">
+  <div class="top">
+    <div>
+      <h1>{{TITLE}}</h1>
+      <div class="meta">{{META}}</div>
+    </div>
+    <span class="badge">{{STATUS}}</span>
+  </div>
+  <div class="controls">
+    <div class="pills" role="tablist" aria-label="Вид разбора">
+      <button role="tab" data-tab="short" aria-selected="true">Кратко</button>
+      <button role="tab" data-tab="detail" aria-selected="false">Подробно</button>
+      <button role="tab" data-tab="chat" aria-selected="false">Для чатов</button>
+    </div>
+    {{YOUTUBE}}
+  </div>
+
+  <section data-panel="short">
+{{SHORT}}
+  </section>
+  <section data-panel="detail" hidden>
+{{DETAIL}}
+  </section>
+  <section data-panel="chat" hidden>
+    <div class="chat-bar">
+      <div class="pills" aria-label="Версия текста">
+        <button data-version="short" aria-pressed="true">Краткая</button>
+        <button data-version="full" aria-pressed="false">Подробная</button>
+      </div>
+      <button class="copy" id="copy">Скопировать всё</button>
+    </div>
+    <pre class="chat-text" data-text="short">{{CHAT_SHORT}}</pre>
+    <pre class="chat-text" data-text="full" hidden>{{CHAT_FULL}}</pre>
+  </section>
+</article>
+<dialog id="viewer" aria-label="Кадр"><img alt=""></dialog>
+<script>
+  document.querySelectorAll('[data-tab]').forEach((tab) => tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-tab]').forEach((t) => t.setAttribute('aria-selected', t === tab));
+    document.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+  }));
+
+  let version = 'short';
+  document.querySelectorAll('[data-version]').forEach((button) => button.addEventListener('click', () => {
+    version = button.dataset.version;
+    document.querySelectorAll('[data-version]').forEach((b) => b.setAttribute('aria-pressed', b === button));
+    document.querySelectorAll('[data-text]').forEach((t) => { t.hidden = t.dataset.text !== version; });
+  }));
+
+  const copy = document.getElementById('copy');
+  copy.addEventListener('click', async () => {
+    const pre = document.querySelector(`[data-text="${version}"]`);
+    try {
+      await navigator.clipboard.writeText(pre.textContent);
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+      document.execCommand('copy');
+    }
+    copy.textContent = 'Скопировано';
+    setTimeout(() => { copy.textContent = 'Скопировать всё'; }, 1600);
+  });
+
+  const viewer = document.getElementById('viewer');
+  const big = viewer.querySelector('img');
+  const shots = [...document.querySelectorAll('.shot img')];
+  let current = 0;
+  const show = (i) => {
+    current = (i + shots.length) % shots.length;
+    big.src = shots[current].src;
+    big.alt = shots[current].alt;
+  };
+  shots.forEach((img, i) => img.parentElement.addEventListener('click', () => { show(i); viewer.showModal(); }));
+  viewer.addEventListener('click', () => viewer.close());
+  document.addEventListener('keydown', (e) => {
+    if (!viewer.open) return;
+    if (e.key === 'ArrowRight') show(current + 1);
+    if (e.key === 'ArrowLeft') show(current - 1);
+  });
+</script>
+</body>
+</html>

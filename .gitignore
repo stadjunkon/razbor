@@ -1,0 +1,12 @@
+# В репозиторий попадает только сам инструмент. Разборы, копилка, задачи и служебные папки — личные.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/CLAUDE.md
+!/tools/
+!/*.command
+!/.claude/
+/.claude/*
+!/.claude/commands/
+.DS_Store

@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Разбор</title>
+<link rel="stylesheet" href="/page.css">
+<style>
+  :root { --error: #b3261e; }
+  @media (prefers-color-scheme: dark) { :root { --error: #ffb4ab; } }
+  input, textarea { font: inherit; color: inherit; }
+
+  .nav { position: sticky; top: 0; z-index: 5; display: flex; justify-content: center; padding: 14px 16px; background: var(--bg); }
+  .nav .pills a { color: var(--muted); border-radius: 99px; padding: 7px 22px; font-size: 15px; font-weight: 500; }
+  .nav .pills a:hover { color: var(--text); text-decoration: none; }
+  .nav .pills a[aria-current] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(21, 24, 29, 0.14); }
+
+  #view { padding: 4px 16px 48px; max-width: 1560px; margin: 0 auto; }
+  .panel { background: var(--surface); border-radius: 20px; padding: 18px; }
+  .grid-3 { display: grid; grid-template-columns: 300px minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+  .side { position: sticky; top: 72px; max-height: calc(100vh - 84px); overflow-y: auto; }
+  .side h2, .panel-title { font-size: 19px; margin: 0 0 12px; }
+
+  .field { width: 100%; border: 0; border-radius: 12px; background: var(--soft); padding: 10px 14px; font-size: 15px; outline: none; }
+  .field::placeholder { color: var(--muted); }
+  .field:focus { box-shadow: 0 0 0 2px var(--accent); }
+  .stack { display: grid; gap: 8px; }
+  .primary { border: 0; width: 100%; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 15px; padding: 11px 18px; border-radius: 12px; cursor: pointer; }
+  .pills.wide { display: flex; }
+  .pills.wide button { flex: 1; padding: 6px 4px; font-size: 14px; }
+
+  .filter { display: flex; flex-wrap: wrap; gap: 4px; margin: 18px 0 8px; }
+  .chip { border: 0; background: transparent; color: var(--muted); padding: 4px 11px; border-radius: 99px; font-size: 14px; cursor: pointer; }
+  .chip:hover { color: var(--text); }
+  .chip[aria-pressed="true"] { background: var(--soft); color: var(--text); font-weight: 500; }
+  .list-item { display: block; padding: 10px 12px; border-radius: 14px; color: var(--text); }
+  .list-item:hover { background: var(--bg); text-decoration: none; }
+  .list-item[aria-current] { background: var(--soft); }
+  .list-item strong { display: block; font-size: 15px; line-height: 1.3; font-weight: 500; }
+  .list-item span { font-size: 13px; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 15px; margin: 12px 0; }
+
+  .center { padding: 28px 36px 40px; min-height: 60vh; }
+  .center h1 { font-size: clamp(24px, 2.4vw, 32px); }
+  .status-select { flex: none; border: 0; background: var(--soft); border-radius: 99px; padding: 6px 12px; font-size: 14px; font-weight: 500; }
+
+  .picked-empty { background: var(--bg); border-radius: 14px; padding: 16px; color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+  .sub { font-size: 16px; font-weight: 600; margin: 16px 0 8px; }
+  .proposal { display: block; background: var(--bg); border-radius: 12px; padding: 9px 12px; font-size: 14px; line-height: 1.4; margin-bottom: 6px; }
+  .proposal .tag { background: var(--soft); }
+  .ghost { border: 0; width: 100%; background: var(--soft); color: var(--text); font-weight: 500; font-size: 15px; padding: 10px 14px; border-radius: 12px; cursor: pointer; margin-top: 8px; }
+  .ghost:hover { background: var(--bg); }
+
+  .grid-tasks { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 14px; align-items: start; }
+  .grid-tasks.open { grid-template-columns: 240px minmax(0, 1fr) 340px; }
+  .filter-row { display: flex; width: 100%; justify-content: space-between; align-items: baseline; border: 0; background: transparent; color: var(--text); border-radius: 12px; padding: 8px 12px; cursor: pointer; font-size: 15px; text-align: left; }
+  .filter-row:hover { background: var(--bg); }
+  .filter-row[aria-pressed="true"] { background: var(--soft); font-weight: 500; }
+  .filter-row b { font-size: 22px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .check-line { display: flex; gap: 8px; align-items: center; margin-top: 14px; padding: 0 12px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .toolbar .field { flex: 1 1 240px; }
+  .table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .table th { text-align: left; font-size: 14px; font-weight: 500; color: var(--muted); padding: 6px 10px; }
+  .table td { padding: 10px; vertical-align: top; }
+  .table tbody tr { cursor: pointer; }
+  .table tbody tr:hover td { background: var(--bg); }
+  .table tbody tr[aria-selected="true"] td { background: var(--soft); }
+  .table td:first-child { border-radius: 10px 0 0 10px; width: 34px; }
+  .table td:last-child { border-radius: 0 10px 10px 0; }
+  .table .done { color: var(--muted); text-decoration: line-through; }
+  .table .dim { color: var(--muted); white-space: nowrap; }
+  .group-head td { font-weight: 600; font-size: 16px; padding-top: 18px; cursor: default; }
+  .table tbody tr.group-head:hover td { background: transparent; }
+  .new-row { margin-top: 12px; }
+  .detail-text { font-size: 19px; line-height: 1.35; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 16px; }
+  .detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 15px; }
+  .detail-row span:first-child { color: var(--muted); }
+  .note-later { background: var(--bg); border-radius: 12px; padding: 12px 14px; color: var(--muted); font-size: 14px; margin-top: 14px; }
+
+  .grid-kop { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 14px; align-items: start; }
+  .put { display: grid; grid-template-columns: minmax(0, 1fr) 150px 150px auto; gap: 8px; margin-top: 8px; }
+  .put .primary { width: auto; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; align-items: start; }
+  .tile { background: var(--surface); border-radius: 20px; overflow: hidden; }
+  .tile img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+  .tile-body { padding: 16px 18px; }
+  .tile-kind { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
+  .tile-text { font-size: 15px; line-height: 1.5; white-space: pre-line; margin: 0; }
+  .tile-price { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 0; }
+  .tile-foot { display: flex; gap: 6px; margin-top: 12px; }
+  .small-btn { border: 0; background: var(--soft); color: var(--text); padding: 5px 12px; border-radius: 99px; font-size: 14px; cursor: pointer; }
+  a.small-btn:hover { text-decoration: none; background: var(--bg); }
+
+  .notice { background: var(--bg); border-radius: 14px; padding: 12px; font-size: 14px; line-height: 1.4; margin-top: 12px; }
+  .home { max-width: 1120px; margin: 0 auto; }
+  .drop { display: flex; gap: 8px; background: var(--surface); padding: 8px; border-radius: 22px; margin-top: 28px; box-shadow: 0 1px 3px rgba(21, 24, 29, 0.08); }
+  .drop:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+  .drop .field { background: transparent; font-size: 18px; padding: 14px 16px; }
+  .drop .field:focus { box-shadow: none; }
+  .drop .primary { width: auto; padding: 0 28px; border-radius: 15px; font-size: 16px; }
+  .drop .file-btn { flex: none; border: 0; background: var(--soft); color: var(--text); font-size: 15px; font-weight: 500; padding: 0 18px; border-radius: 15px; cursor: pointer; }
+  .drop .file-btn:hover { background: var(--bg); }
+  .drop.dragging { box-shadow: 0 0 0 2px var(--accent); background: var(--soft); }
+  .more { margin: 12px 8px 0; font-size: 14px; color: var(--muted); }
+  .more summary { cursor: pointer; width: fit-content; }
+  .more summary:hover { color: var(--text); }
+  .more .stack { margin-top: 10px; max-width: 560px; }
+  .hint { margin: 0 4px; font-size: 14px; color: var(--muted); }
+  .login { display: flex; align-items: center; gap: 18px; background: var(--surface); border-radius: 20px; padding: 16px 16px 16px 20px; margin-top: 16px; }
+  .login p { margin: 0; flex: 1; font-size: 15px; line-height: 1.45; }
+  .login .primary { width: auto; white-space: nowrap; }
+  .home-title { font-size: 19px; margin: 40px 8px 12px; }
+  #group-filter { margin: -2px 4px 14px; }
+  .chip span { color: var(--muted); margin-left: 3px; font-weight: 400; }
+  #cards > .cards + .group, #cards > .group + .group { margin-top: 32px; }
+  #cards > .cards + .cards { margin-top: 14px; }
+  .group-title { font-size: 16px; font-weight: 600; margin: 0 8px 12px; }
+  .group-title span { color: var(--muted); font-weight: 500; margin-left: 6px; }
+  .group-line { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .group-field { border: 0; background: var(--soft); border-radius: 99px; padding: 6px 14px; font-size: 14px; color: var(--text); min-width: 220px; outline: none; }
+  .group-field:focus { box-shadow: 0 0 0 2px var(--accent); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .card { display: block; background: var(--surface); border-radius: 20px; overflow: hidden; color: var(--text); }
+  a.card:hover { text-decoration: none; box-shadow: 0 8px 24px rgba(21, 24, 29, 0.1); }
+  .thumb { aspect-ratio: 16 / 9; background: var(--soft); }
+  .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .card-body { padding: 14px 16px 16px; }
+  .card-body strong { display: block; font-size: 15px; line-height: 1.35; font-weight: 600; overflow-wrap: anywhere; }
+  .card-body > span { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .card-body > .fresh { color: var(--accent); font-weight: 500; }
+  .job.running .thumb { animation: pulse 1.6s ease-in-out infinite; }
+  .back { display: inline-block; margin: 0 0 12px 8px; color: var(--muted); font-size: 15px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  .grid-read { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; align-items: start; }
+  .job-state { font-size: 13px; line-height: 1.35; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+  .job.running .job-state { color: var(--accent); font-weight: 500; }
+  .job.failed .job-state { color: var(--error); }
+  .job-actions { display: flex; gap: 2px; margin: 4px 0 0 -6px; }
+  .job.running .job-state::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s ease-in-out infinite; vertical-align: middle; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .job.running .job-state::after, .job.running .thumb { animation: none; } }
+  .plus-host { position: relative; padding-right: 34px; }
+  .plus { position: absolute; top: 2px; right: 0; width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--soft); color: var(--accent); font-size: 16px; line-height: 1; font-weight: 600; cursor: pointer; }
+  .plus:hover { background: var(--accent); color: var(--on-accent); }
+  .plus:disabled { background: transparent; color: var(--muted); cursor: default; font-size: 14px; }
+  .pick { background: var(--bg); border-radius: 14px; padding: 8px; margin-bottom: 8px; }
+  .pick textarea { display: block; width: 100%; border: 0; background: transparent; resize: none; field-sizing: content; min-height: 42px; padding: 4px 6px; font-size: 14px; line-height: 1.4; outline: none; border-radius: 8px; }
+  .pick textarea:focus { box-shadow: 0 0 0 2px var(--accent); }
+  .pick-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; }
+  .pick .pills { background: var(--soft); }
+  .pick .pills button { padding: 3px 10px; font-size: 13px; }
+  .pick-frame { display: block; width: 100%; border-radius: 8px; margin-bottom: 6px; }
+  .pick-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .pick-fields .field { padding: 5px 8px; font-size: 13px; border-radius: 8px; min-width: 0; background: var(--surface); }
+  .remove { border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; padding: 2px 6px; }
+  .remove:hover { color: var(--text); }
+  button.proposal { width: 100%; border: 0; text-align: left; color: var(--text); cursor: pointer; }
+  button.proposal:hover { background: var(--soft); }
+  button.proposal:disabled { color: var(--muted); cursor: default; background: var(--bg); }
+  .taken { font-size: 13px; line-height: 1.4; color: var(--muted); margin: 0 0 6px; }
+
+  .percent { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 2px; }
+  .percent b { font-size: 40px; line-height: 1; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .percent span { font-size: 14px; color: var(--muted); }
+  .detail-select { border: 0; background: var(--soft); border-radius: 8px; padding: 3px 8px; font-size: 14px; }
+  .detail-area { min-height: 84px; resize: vertical; display: block; }
+  .step { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; line-height: 1.35; padding: 4px 0; }
+  .step label { display: flex; gap: 8px; flex: 1; cursor: pointer; }
+  .step input { margin-top: 3px; accent-color: var(--accent); }
+  .step .done { color: var(--muted); text-decoration: line-through; }
+  .comment { background: var(--bg); border-radius: 12px; padding: 8px 12px; font-size: 14px; line-height: 1.4; margin-bottom: 6px; }
+  .comment small { display: block; color: var(--muted); font-size: 13px; }
+  .put-product { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: 15px; z-index: 20; }
+
+  @media (max-width: 1180px) {
+    .grid-3 { grid-template-columns: 280px minmax(0, 1fr); }
+    .grid-3 > .picked { grid-column: 2; }
+    .grid-tasks.open { grid-template-columns: 220px minmax(0, 1fr); }
+    .grid-tasks.open > .task-detail { grid-column: 2; }
+  }
+  @media (max-width: 960px) {
+    .grid-read { grid-template-columns: minmax(0, 1fr); }
+    .grid-read > .side { position: static; max-height: none; }
+  }
+  @media (max-width: 760px) {
+    .login { flex-direction: column; align-items: stretch; }
+    .drop .primary, .drop .file-btn { padding: 0 14px; }
+    .grid-3, .grid-tasks, .grid-tasks.open, .grid-kop { grid-template-columns: minmax(0, 1fr); }
+    .grid-3 > .picked, .grid-tasks.open > .task-detail { grid-column: auto; }
+    .side { position: static; max-height: none; }
+    .center { padding: 20px 16px 32px; }
+    .nav .pills a { padding: 7px 14px; }
+    .put { grid-template-columns: 1fr 1fr; }
+    .put .wide-cell { grid-column: 1 / -1; }
+    .col-hide { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="nav"><nav class="pills" id="tabs" aria-label="Разделы"></nav></div>
+<main id="view"></main>
+<dialog id="viewer" aria-label="Кадр"><img alt=""></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const view = document.getElementById('view');
+const STATUS = { new: 'Новое', read: 'Прочитал', useful: 'Полезно', skip: 'Мимо' };
+const DEPTHS = ['бегло', 'обычно', 'подробно', 'визуально'];
+const SECTIONS = ['Входящие', 'Сейчас', 'Дальше', 'Когда-нибудь', 'Сделано'];
+let state = { razbors: [], jobs: [], counts: {} };
+let depth = 'обычно';
+let statusFilter = null;
+let reading = 'short';
+let chatVersion = 'short';
+let taskUi = { query: '', archive: false, section: null, grouped: true, selected: null };
+let kopUi = { query: '', kind: null, topic: null };
+
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const enc = encodeURIComponent;
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Не получилось загрузить данные. Проверь, что окно терминала с приложением открыто');
+  return data;
+}
+
+let toastTimer;
+function toast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+}
+async function act(fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function paintTabs() {
+  const hash = location.hash || '#/';
+  const current = hash.startsWith('#/tasks') ? 'tasks' : hash.startsWith('#/kopilka') ? 'kopilka' : 'razbor';
+  const item = (id, href, label) => `<a href="${href}" ${current === id ? 'aria-current="page"' : ''}>${label}</a>`;
+  document.getElementById('tabs').innerHTML = item('razbor', '#/', 'Разбор') + item('tasks', '#/tasks', 'Задачи') + item('kopilka', '#/kopilka', 'Копилка');
+}
+
+// --- Разбор ---
+
+const DEPTH_HINT = {
+  бегло: 'Суть и пять тезисов, без кадров. Быстрее всего.',
+  обычно: 'Суть, тезисы, таймлайн и 6–12 кадров.',
+  подробно: 'Как обычно, плюс подробности по каждому блоку и точные цифры.',
+  визуально: 'Для дизайн-видео: 15–30 кадров и что показано на экране.',
+};
+const frameUrl = (folder, frame) => `/files/Razbor/${enc(folder)}/img/${enc(frame)}`;
+const announced = new Set();
+let moreOpen = false;
+let uploads = [];
+let groupFilter = null; // null — все, '' — без подборки
+let groupDraft = '';
+try { groupDraft = localStorage.getItem('razbor-group') || ''; } catch { /* без хранилища подборка не запомнится */ }
+
+// Подборки по порядку свежести: state.razbors уже отсортирован, новые сверху.
+const groupList = () => [...new Set(state.razbors.map((r) => r.group).filter(Boolean))];
+const moreSummary = () => `Настройки разбора: ${depth}${groupDraft ? `, подборка «${groupDraft}»` : ''}`;
+
+function jobLine(job) {
+  if (job.status === 'queued') return state.loggedIn ? 'В очереди, начнётся после текущего' : 'Ждёт входа в Claude';
+  if (job.status === 'running') return job.step && job.step !== 'Запускаю' ? `Разбирается: ${job.step.toLowerCase()}` : 'Разбирается';
+  return job.error || 'Разбор не получился';
+}
+
+function paintHome() {
+  const cards = document.getElementById('cards');
+  if (!cards) return;
+  const active = state.jobs.filter((j) => j.status !== 'done');
+  document.getElementById('login').innerHTML = state.loggedIn ? '' : `
+    <div class="login">
+      <p><b>Claude не подключён.</b> Разборы делает Claude на этом компьютере, ему нужно один раз войти в твой аккаунт.${active.length ? ' Ссылки подождут и начнутся сами.' : ''}</p>
+      <button class="primary" type="button" data-login>Войти в Claude</button>
+    </div>`;
+  const uploadCards = uploads.map((u) => `
+    <div class="card job running" id="up-${u.key}">
+      <div class="thumb"></div>
+      <div class="card-body">
+        <strong>${esc(u.name)}</strong>
+        <div class="job-state">Загружаю: ${u.percent}%</div>
+      </div>
+    </div>`).join('');
+  const jobCards = active.map((job) => `
+    <div class="card job ${job.status}">
+      <div class="thumb"></div>
+      <div class="card-body">
+        <strong>${esc(job.title || job.url)}</strong>
+        <div class="job-state">${esc(jobLine(job))}</div>
+        <div class="job-actions">
+          ${job.status === 'failed' ? `<button class="remove" data-retry="${job.id}">Повторить</button>` : ''}
+          <button class="remove" data-cancel="${job.id}">${job.status === 'running' ? 'Остановить' : 'Убрать'}</button>
+        </div>
+      </div>
+    </div>`).join('');
+  const razborCard = (r) => `
+    <a class="card" href="#/r/${enc(r.folder)}">
+      <div class="thumb">${r.frames?.length ? `<img src="${frameUrl(r.folder, r.frames[0])}" alt="" loading="lazy">` : ''}</div>
+      <div class="card-body">
+        <strong>${esc(r.title || r.folder)}</strong>
+        <span>${[r.author, r.length].filter(Boolean).map(esc).join(', ')}</span>
+        ${(r.status || 'new') === 'new' ? '<span class="fresh">Новое</span>' : ''}
+      </div>
+    </a>`;
+
+  const groups = groupList();
+  if (groupFilter !== null && groupFilter !== '' && !groups.includes(groupFilter)) groupFilter = null;
+  const ungrouped = state.razbors.filter((r) => !r.group);
+  const chip = (value, label, count) => `<button class="chip" data-group="${esc(value)}" aria-pressed="${groupFilter === (value === '__all' ? null : value)}">${esc(label)}${count !== undefined ? `<span>${count}</span>` : ''}</button>`;
+  document.getElementById('group-filter').innerHTML = groups.length ? [
+    chip('__all', 'Все'),
+    ...groups.map((g) => chip(g, g, state.razbors.filter((r) => r.group === g).length)),
+    ungrouped.length ? chip('', 'Без подборки', ungrouped.length) : '',
+  ].join('') : '';
+  document.getElementById('group-options').innerHTML = groups.map((g) => `<option value="${esc(g)}">`).join('');
+
+  const grid = (items) => `<div class="cards">${items}</div>`;
+  let body;
+  if (groupFilter === null && groups.length) {
+    const sections = [...groups.map((g) => [g, state.razbors.filter((r) => r.group === g)]), ['', ungrouped]].filter(([, items]) => items.length);
+    body = sections.map(([g, items]) => `<section class="group"><h3 class="group-title">${esc(g || 'Без подборки')}<span>${items.length}</span></h3>${grid(items.map(razborCard).join(''))}</section>`).join('');
+  } else {
+    const items = state.razbors.filter((r) => groupFilter === null || (r.group || '') === groupFilter);
+    body = items.length ? grid(items.map(razborCard).join('')) : '';
+  }
+  const working = uploadCards + jobCards;
+  cards.innerHTML = (working ? grid(working) : '') + body || '<p class="empty">Здесь появятся твои разборы.</p>';
+}
+
+const snapshot = () => JSON.stringify([state.razbors.map((r) => [r.folder, r.status]), state.jobs, state.loggedIn]);
+
+async function poll() {
+  const before = snapshot();
+  state = await api('/api/state');
+  state.jobs.filter((j) => j.status === 'done' && !announced.has(j.id)).forEach((j) => {
+    announced.add(j.id);
+    toast(`Разбор готов: ${j.title || j.folder}`);
+  });
+  if (snapshot() !== before) paintHome();
+}
+
+// Своё видео уходит на сервер потоком и встаёт в ту же очередь, что и ссылки.
+function uploadFile(file) {
+  const item = { key: `${Date.now()}${uploads.length}`, name: file.name.replace(/\.[^.]+$/, ''), percent: 0 };
+  uploads.push(item);
+  paintHome();
+  const query = new URLSearchParams({ name: file.name, mode: depth, focus: document.querySelector('input[name="focus"]')?.value || '', group: groupDraft });
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `/api/upload?${query}`);
+  xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+  xhr.upload.addEventListener('progress', (e) => {
+    if (!e.lengthComputable) return;
+    item.percent = Math.round((e.loaded / e.total) * 100);
+    const line = document.querySelector(`#up-${item.key} .job-state`);
+    if (line) line.textContent = `Загружаю: ${item.percent}%`;
+  });
+  xhr.addEventListener('loadend', async () => {
+    uploads = uploads.filter((u) => u !== item);
+    if (xhr.status !== 200) {
+      let message = '';
+      try { message = JSON.parse(xhr.responseText).error; } catch { /* ответа нет */ }
+      toast(message || 'Файл не загрузился. Проверь, что приложение запущено');
+    }
+    await poll().catch(() => {});
+    paintHome();
+  });
+  xhr.send(file);
+}
+
+const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => {
+  if (!hasFiles(e)) return;
+  dragDepth += 1;
+  document.getElementById('add')?.classList.add('dragging');
+});
+document.addEventListener('dragleave', (e) => {
+  if (!hasFiles(e)) return;
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) document.getElementById('add')?.classList.remove('dragging');
+});
+document.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+document.addEventListener('drop', (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  dragDepth = 0;
+  const form = document.getElementById('add');
+  if (!form) return toast('Перетащи видео на главном экране, во вкладке «Разбор»');
+  form.classList.remove('dragging');
+  const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('video/') || /\.(mkv|avi)$/i.test(f.name));
+  if (!files.length) return toast('Это не видео. Подойдут mp4, mov, m4v, webm, mkv и avi');
+  files.forEach(uploadFile);
+});
+
+function viewHome() {
+  reader = null;
+  view.innerHTML = `
+    <div class="home">
+      <form class="drop" id="add">
+        <input class="field" name="url" placeholder="Ссылка или видеофайл сюда" aria-label="Ссылка на видео" autocomplete="off">
+        <button type="button" class="file-btn" id="pick-file">Файл с компьютера</button>
+        <input type="file" id="file-input" accept="video/*,.mkv,.avi" multiple hidden>
+        <button class="primary">Разобрать</button>
+      </form>
+      <details class="more" id="more" ${moreOpen ? 'open' : ''}>
+        <summary>${esc(moreSummary())}</summary>
+        <div class="stack">
+          <div class="pills wide" id="depth">${DEPTHS.map((d) => `<button type="button" data-depth="${d}" aria-pressed="${d === depth}">${cap(d)}</button>`).join('')}</div>
+          <p class="hint" id="depth-hint">${DEPTH_HINT[depth]}</p>
+          <input class="field" name="focus" form="add" placeholder="На что обратить внимание, необязательно" aria-label="На что обратить внимание">
+          <input class="field" id="group-input" list="group-options" placeholder="Подборка, например «Курс по UX», необязательно" aria-label="Подборка" value="${esc(groupDraft)}" autocomplete="off">
+          <datalist id="group-options"></datalist>
+        </div>
+      </details>
+      <div id="login"></div>
+      <h2 class="home-title">Разборы</h2>
+      <div class="filter" id="group-filter"></div>
+      <div id="cards"></div>
+    </div>`;
+  paintHome();
+
+  const form = document.getElementById('add');
+  const submit = () => act(async () => {
+    if (!form.elements.url.value.trim()) return toast('Вставь ссылку на видео');
+    await api('/api/jobs', { url: form.elements.url.value, mode: depth, focus: form.elements.focus.value, group: groupDraft });
+    form.reset();
+    await poll();
+  });
+  form.addEventListener('submit', (e) => { e.preventDefault(); submit(); });
+  // Вставил ссылку — разбор стартует сам, кнопку жать не нужно.
+  form.elements.url.addEventListener('paste', () => setTimeout(() => {
+    if (/^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be|loom\.com)\//.test(form.elements.url.value.trim())) submit();
+  }));
+  form.elements.url.focus();
+
+  const fileInput = document.getElementById('file-input');
+  document.getElementById('pick-file').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    [...fileInput.files].forEach(uploadFile);
+    fileInput.value = '';
+  });
+
+  const more = document.getElementById('more');
+  document.getElementById('group-input').addEventListener('input', (e) => {
+    groupDraft = e.target.value.replace(/\s+/g, ' ').trim();
+    try { localStorage.setItem('razbor-group', groupDraft); } catch { /* не запомнится */ }
+    more.querySelector('summary').textContent = moreSummary();
+  });
+  document.getElementById('group-filter').addEventListener('click', (e) => {
+    const button = e.target.closest('[data-group]');
+    if (!button) return;
+    groupFilter = button.dataset.group === '__all' ? null : button.dataset.group;
+    paintHome();
+  });
+  more.addEventListener('toggle', () => { moreOpen = more.open; });
+  document.getElementById('depth').addEventListener('click', (e) => {
+    if (!e.target.dataset.depth) return;
+    depth = e.target.dataset.depth;
+    document.querySelectorAll('#depth button').forEach((b) => b.setAttribute('aria-pressed', b === e.target));
+    document.getElementById('depth-hint').textContent = DEPTH_HINT[depth];
+    more.querySelector('summary').textContent = moreSummary();
+  });
+  document.getElementById('login').addEventListener('click', (e) => {
+    if (!e.target.closest('[data-login]')) return;
+    act(async () => {
+      await api('/api/login', {});
+      toast('Открылось окно входа. Доведи вход в браузере до конца');
+    });
+  });
+  document.getElementById('cards').addEventListener('click', (e) => {
+    const { cancel, retry } = e.target.dataset;
+    if (!cancel && !retry) return;
+    act(async () => {
+      await api(cancel ? '/api/jobs/cancel' : '/api/jobs/retry', { id: cancel || retry });
+      await poll();
+    });
+  });
+}
+
+// Отобранное живёт только в этом браузере, пока не нажата «Отправить».
+let reader = null;
+let picked = [];
+let plusItems = [];
+const pickedKey = (folder) => `razbor-picked:${folder}`;
+
+function loadPicked(folder) {
+  try {
+    return JSON.parse(localStorage.getItem(pickedKey(folder))) || [];
+  } catch {
+    return [];
+  }
+}
+
+function savePicked() {
+  try {
+    localStorage.setItem(pickedKey(reader.folder), JSON.stringify(picked));
+  } catch {
+    // без хранилища список просто не переживёт перезагрузку
+  }
+}
+
+const norm = (text) => text.replace(/\s+/g, ' ').trim();
+const isPicked = (text) => picked.some((p) => p.orig === text);
+const isTaken = (text) => reader.data.taken.some((t) => t.text === norm(text));
+
+function pick(item) {
+  if (isPicked(item.text)) return;
+  picked.push({ id: `${Date.now()}-${picked.length}`, orig: item.text, topic: reader.data.front.topic || '', ...item });
+  savePicked();
+  paintPicked();
+  markPlus();
+}
+
+function markPlus() {
+  plusItems.forEach(({ button, item }) => {
+    const done = isPicked(item.text) || isTaken(item.text);
+    button.disabled = done;
+    button.textContent = done ? '✓' : '+';
+  });
+}
+
+function addPlus(host, item) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'plus';
+  button.setAttribute('aria-label', `Отобрать: ${item.text.slice(0, 60)}`);
+  button.addEventListener('click', () => pick(item));
+  host.classList.add('plus-host');
+  host.append(button);
+  plusItems.push({ button, item });
+}
+
+function decorate() {
+  plusItems = [];
+  const root = document.getElementById('reading');
+  const textOf = (el) => norm(el.textContent);
+  const secondsOf = (el) => {
+    const tc = el?.querySelector('.tc');
+    if (tc?.dataset.t) return Number(tc.dataset.t);
+    const match = tc?.href?.match(/[?&]t=(\d+)/);
+    return match ? Number(match[1]) : null;
+  };
+  root.querySelectorAll('.numbered li').forEach((li) => {
+    addPlus(li, { source: li.querySelector('.num').textContent, text: textOf(li.querySelector('div')), dest: 'kopilka', kind: 'инсайт' });
+  });
+  root.querySelectorAll('.facts > div').forEach((fact) => {
+    addPlus(fact, { source: 'факт', text: `${textOf(fact.querySelector('dt'))}: ${textOf(fact.querySelector('dd'))}`, dest: 'kopilka', kind: 'полезное' });
+  });
+  root.querySelectorAll('.block').forEach((block) => {
+    const source = block.querySelector('.num').textContent;
+    const seconds = secondsOf(block.querySelector('.block-side'));
+    block.querySelectorAll('.block-main h3, .block-main > p:not(.skip), .block-main li, .block-main blockquote').forEach((el) => {
+      addPlus(el, { source, text: textOf(el), dest: 'kopilka', kind: 'приём', seconds });
+    });
+    block.querySelectorAll('figure').forEach((figure) => {
+      const caption = figure.querySelector('figcaption');
+      const frame = figure.querySelector('img').getAttribute('src').split('/').pop();
+      addPlus(caption, { source, text: textOf(caption).replace(/^\d{1,2}:\d{2}(:\d{2})?\s*/, ''), dest: 'kopilka', kind: 'референс', seconds: secondsOf(caption) ?? seconds, frame });
+    });
+  });
+  root.querySelectorAll('.part:not(.wide):not(.lead) > ul > li').forEach((li) => {
+    addPlus(li, { source: 'вопрос', text: textOf(li), dest: 'task', kind: 'полезное' });
+  });
+  markPlus();
+}
+
+function proposalItem(p) {
+  const kinds = reader.data.kinds;
+  return { source: p.ref, text: p.text, dest: p.tag === 'задача' ? 'task' : 'kopilka', kind: kinds.includes(p.tag) ? p.tag : 'инсайт' };
+}
+
+function paintPicked() {
+  const box = document.getElementById('picked');
+  if (!reader) {
+    box.innerHTML = '<h2>Отобрано</h2><div class="picked-empty">Открой разбор и выбирай нужные строки кнопкой «+».</div>';
+    return;
+  }
+  const { kinds, topics, proposals, taken } = reader.data;
+  const frameSrc = (frame) => `/files/Razbor/${enc(reader.folder)}/img/${enc(frame)}`;
+  box.innerHTML = `
+    <h2>Отобрано</h2>
+    ${picked.length ? picked.map((p) => `
+      <div class="pick" data-id="${esc(p.id)}">
+        ${p.frame ? `<img class="pick-frame" src="${frameSrc(p.frame)}" alt="">` : ''}
+        <textarea aria-label="Текст строки">${esc(p.text)}</textarea>
+        <div class="pick-row">
+          <div class="pills">
+            <button type="button" data-dest="task" aria-pressed="${p.dest === 'task'}">Задача</button>
+            <button type="button" data-dest="kopilka" aria-pressed="${p.dest === 'kopilka'}">В копилку</button>
+          </div>
+          <button type="button" class="remove" data-remove>Убрать</button>
+        </div>
+        ${p.dest === 'kopilka' ? `<div class="pick-fields">
+          <select class="field" data-field="kind" aria-label="Тип">${kinds.map((k) => `<option ${k === p.kind ? 'selected' : ''}>${k}</option>`).join('')}</select>
+          <input class="field" data-field="topic" list="topic-list" placeholder="Тема" aria-label="Тема" value="${esc(p.topic)}">
+        </div>` : ''}
+      </div>`).join('') : '<div class="picked-empty">Пока пусто. Нажимай «+» у нужных строк разбора.</div>'}
+    <datalist id="topic-list">${topics.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+    <form id="own"><input class="field" placeholder="Своя мысль или задача" aria-label="Своя мысль или задача"></form>
+    <p class="sub">Предложения Claude</p>
+    ${proposals.length ? proposals.map((p, i) => `<button type="button" class="proposal" data-proposal="${i}" ${isPicked(p.text) || isTaken(p.text) ? 'disabled' : ''}>${p.tag ? `<span class="tag">${esc(p.tag)}</span> ` : ''}${esc(p.text)}</button>`).join('') : '<p class="empty">Предложений нет.</p>'}
+    <button class="primary" id="send" style="margin-top:12px">Отправить${picked.length ? ` (${picked.length})` : ''}</button>
+    <button class="ghost" id="whole">Весь разбор в копилку</button>
+    ${taken.length ? `<p class="sub">Уже забрано</p>${taken.map((t) => `<p class="taken">${esc(t.dest === 'задачи' ? 'В задачи' : 'В копилку')}: ${esc(t.text)}</p>`).join('')}` : ''}`;
+
+  box.querySelectorAll('.pick').forEach((row) => {
+    const item = picked.find((p) => p.id === row.dataset.id);
+    row.querySelector('textarea').addEventListener('input', (e) => { item.text = e.target.value; savePicked(); });
+    row.querySelectorAll('[data-field]').forEach((field) => field.addEventListener('input', (e) => { item[field.dataset.field] = e.target.value; savePicked(); }));
+    row.querySelectorAll('[data-dest]').forEach((b) => b.addEventListener('click', () => { item.dest = b.dataset.dest; savePicked(); paintPicked(); }));
+    row.querySelector('[data-remove]').addEventListener('click', () => {
+      picked = picked.filter((p) => p !== item);
+      savePicked();
+      paintPicked();
+      markPlus();
+    });
+  });
+  box.querySelectorAll('[data-proposal]').forEach((b) => b.addEventListener('click', () => pick(proposalItem(proposals[Number(b.dataset.proposal)]))));
+  box.querySelector('#own').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = e.target.querySelector('input').value.trim();
+    if (!text) return;
+    pick({ source: 'своё', text, dest: 'task', kind: 'инсайт' });
+    document.querySelector('#own input').focus();
+  });
+  box.querySelector('#send').addEventListener('click', () => act(async () => {
+    if (!picked.length) return toast('Сначала отбери строки кнопкой «+»');
+    const items = picked.map(({ source, text, dest, kind, topic, seconds, frame }) => ({ source, text, dest, kind, topic, seconds, frame }));
+    const result = await api('/api/send', { folder: reader.folder, items });
+    picked = [];
+    savePicked();
+    await reloadReader();
+    toast(`Отправлено: задач ${result.tasks}, в копилку ${result.kopilka}`);
+  }));
+  box.querySelector('#whole').addEventListener('click', () => act(async () => {
+    await api('/api/razbor/whole', { folder: reader.folder });
+    await reloadReader();
+    toast('Разбор добавлен в копилку');
+  }));
+}
+
+async function reloadReader() {
+  reader.data = await api(`/api/razbor/${enc(reader.folder)}`);
+  document.querySelector('.status-select').value = reader.data.front.status || 'new';
+  paintPicked();
+  markPlus();
+  state = await api('/api/state');
+}
+
+function paintReading(data) {
+  const body = document.getElementById('reading');
+  const pills = (t, label) => `<button role="tab" data-read="${t}" aria-selected="${reading === t}">${label}</button>`;
+  document.getElementById('reading-tabs').innerHTML = pills('short', 'Кратко') + pills('detail', 'Подробно') + pills('chat', 'Для чатов');
+  if (reading === 'chat') {
+    body.innerHTML = `
+      <div class="chat-bar">
+        <div class="pills"><button data-chat="short" aria-pressed="${chatVersion === 'short'}">Краткая</button><button data-chat="full" aria-pressed="${chatVersion === 'full'}">Подробная</button></div>
+        <button class="copy" id="copy">Скопировать всё</button>
+      </div>
+      <pre class="chat-text" id="chat-text">${esc(chatVersion === 'short' ? data.chatShort : data.chatFull)}</pre>`;
+    document.getElementById('copy').addEventListener('click', async (e) => {
+      await navigator.clipboard.writeText(document.getElementById('chat-text').textContent);
+      e.target.textContent = 'Скопировано';
+      setTimeout(() => { e.target.textContent = 'Скопировать всё'; }, 1600);
+    });
+    body.querySelectorAll('[data-chat]').forEach((b) => b.addEventListener('click', () => { chatVersion = b.dataset.chat; paintReading(data); }));
+  } else {
+    body.innerHTML = reading === 'short' ? data.short : data.detail;
+    decorate();
+  }
+  document.querySelectorAll('[data-read]').forEach((b) => b.addEventListener('click', () => { reading = b.dataset.read; paintReading(data); }));
+}
+
+async function viewRazbor(selected) {
+  view.innerHTML = `
+    <a class="back" href="#/">Все разборы</a>
+    <div class="grid-read">
+      <section class="panel center" id="center"></section>
+      <aside class="panel side picked" id="picked"></aside>
+    </div>`;
+  const center = document.getElementById('center');
+  const data = await api(`/api/razbor/${enc(selected)}`);
+  reader = { folder: selected, data };
+  picked = loadPicked(selected);
+  const f = data.front;
+  const status = f.status || 'new';
+  center.innerHTML = `
+    <div class="top">
+      <div>
+        <h1>${esc(f.title || selected)}</h1>
+        <div class="meta">${[f.author, f.published].filter(Boolean).map((m) => `<span>${esc(m)}</span>`).join('')}</div>
+        <label class="group-line">Подборка
+          <input class="group-field" id="group-field" list="reader-groups" placeholder="без подборки" value="${esc(f.group || '')}" autocomplete="off">
+        </label>
+        <datalist id="reader-groups">${groupList().map((g) => `<option value="${esc(g)}">`).join('')}</datalist>
+      </div>
+      <select class="status-select" aria-label="Статус разбора">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === status ? 'selected' : ''}>${v}</option>`).join('')}</select>
+    </div>
+    <div class="controls">
+      <div class="pills" role="tablist" id="reading-tabs" aria-label="Вид разбора"></div>
+      ${f.url ? `<a class="pill-link" href="${esc(f.url)}" target="_blank" rel="noopener">${/loom\.com/.test(f.url) ? 'Loom' : 'YouTube'}</a>` : ''}
+    </div>
+    <div id="reading"></div>`;
+  paintReading(data);
+  paintPicked();
+  center.querySelector('.status-select').addEventListener('change', (e) => act(async () => {
+    await api('/api/razbor/status', { folder: selected, status: e.target.value });
+    await reloadReader();
+  }));
+  center.querySelector('#group-field').addEventListener('change', (e) => act(async () => {
+    const group = e.target.value.replace(/\s+/g, ' ').trim();
+    await api('/api/razbor/group', { folder: selected, group });
+    state = await api('/api/state');
+    toast(group ? `Перенесено в подборку «${group}»` : 'Убрано из подборки');
+  }));
+}
+
+// --- Задачи ---
+
+function razborTitle(folder) {
+  return state.razbors.find((r) => r.folder === folder)?.title || folder;
+}
+
+function renderTasks(sections) {
+  const rows = sections.flatMap((s) => s.items.map((t) => ({ ...t, section: s.name })));
+  const scope = rows.filter((t) => (taskUi.archive ? t.section === 'Сделано' : t.section !== 'Сделано'));
+  const q = taskUi.query.trim().toLowerCase();
+  const visible = scope.filter((t) => (!taskUi.section || t.section === taskUi.section) && (!q || t.text.toLowerCase().includes(q)));
+  const open = visible.find((t) => t.text === taskUi.selected);
+  const names = taskUi.archive ? ['Сделано'] : SECTIONS.slice(0, 4);
+
+  const row = (t) => `
+    <tr data-line="${t.line}" aria-selected="${t.text === taskUi.selected}">
+      <td><input type="checkbox" ${t.done ? 'checked' : ''} aria-label="Готово"></td>
+      <td class="${t.done ? 'done' : ''}">${esc(t.text)}</td>
+      <td class="dim col-hide">${esc(t.section)}</td>
+      <td class="dim col-hide">${esc(t.due || t.date || '—')}</td>
+      <td class="dim col-hide">${t.folder ? `<a href="#/r/${enc(t.folder)}">Из разбора</a>` : 'Своя'}</td>
+    </tr>`;
+  const tbody = !visible.length ? '' : taskUi.grouped
+    ? names.filter((n) => visible.some((t) => t.section === n)).map((n) => `<tr class="group-head"><td colspan="5">${n}</td></tr>${visible.filter((t) => t.section === n).map(row).join('')}`).join('')
+    : visible.map(row).join('');
+
+  const emptyText = rows.length ? 'Ничего не нашлось. Измени поиск или раздел.' : 'Задач пока нет. Они появятся из разборов или из строки ниже.';
+  view.innerHTML = `
+    <div class="grid-tasks ${open ? 'open' : ''}">
+      <aside class="panel side">
+        <button class="filter-row" data-section="" aria-pressed="${!taskUi.section}"><span>Все</span><b>${scope.length}</b></button>
+        ${names.map((n) => `<button class="filter-row" data-section="${n}" aria-pressed="${taskUi.section === n}"><span>${n}</span><b>${scope.filter((t) => t.section === n).length}</b></button>`).join('')}
+        <label class="check-line"><input type="checkbox" id="grouped" ${taskUi.grouped ? 'checked' : ''}> Группировать по разделам</label>
+      </aside>
+      <section class="panel">
+        <div class="toolbar">
+          <input class="field" id="task-search" placeholder="Найти задачу" aria-label="Поиск задач" value="${esc(taskUi.query)}">
+          <div class="pills"><button data-archive="" aria-pressed="${!taskUi.archive}">Актуальные</button><button data-archive="1" aria-pressed="${taskUi.archive}">Архив</button></div>
+        </div>
+        ${visible.length ? `<table class="table"><thead><tr><th></th><th>Задача</th><th class="col-hide">Раздел</th><th class="col-hide">Срок</th><th class="col-hide">Откуда</th></tr></thead><tbody>${tbody}</tbody></table>` : `<p class="empty">${emptyText}</p>`}
+        <form class="new-row" id="task-new"><input class="field" placeholder="Новая задача" aria-label="Новая задача"></form>
+      </section>
+      ${open ? '<aside class="panel side task-detail" id="task-panel"></aside>' : ''}
+    </div>`;
+
+  const repaint = () => renderTasks(sections);
+  if (open) act(() => paintTaskPanel(open));
+  view.querySelectorAll('[data-section]').forEach((b) => b.addEventListener('click', () => { taskUi.section = b.dataset.section || null; repaint(); }));
+  view.querySelectorAll('[data-archive]').forEach((b) => b.addEventListener('click', () => { taskUi.archive = Boolean(b.dataset.archive); taskUi.section = null; taskUi.selected = null; repaint(); }));
+  view.querySelector('#grouped').addEventListener('change', (e) => { taskUi.grouped = e.target.checked; repaint(); });
+  const search = view.querySelector('#task-search');
+  search.addEventListener('input', (e) => {
+    taskUi.query = e.target.value;
+    const at = e.target.selectionStart;
+    repaint();
+    const next = view.querySelector('#task-search');
+    next.focus();
+    next.setSelectionRange(at, at);
+  });
+  view.querySelector('#task-new').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = e.target.querySelector('input').value.trim();
+    if (!text) return;
+    act(async () => {
+      await api('/api/tasks/add', { text });
+      await loadTasks();
+      view.querySelector('#task-new input').focus();
+    });
+  });
+  view.querySelectorAll('tr[data-line]').forEach((tr) => {
+    const task = rows.find((t) => t.line === Number(tr.dataset.line));
+    tr.querySelector('input').addEventListener('change', (e) => act(async () => {
+      await api('/api/tasks/move', { line: task.line, raw: task.raw, to: e.target.checked ? 'Сделано' : 'Входящие' });
+      await loadTasks();
+    }));
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('a, input')) return;
+      taskUi.selected = taskUi.selected === task.text ? null : task.text;
+      repaint();
+    });
+  });
+}
+
+async function loadTasks() {
+  renderTasks(await api('/api/tasks'));
+}
+
+let openTask = null;
+let taskDetail = null;
+let saveQueue = Promise.resolve();
+
+async function paintTaskPanel(task) {
+  openTask = task;
+  taskDetail = task.file ? await api(`/api/task-detail/${enc(task.file)}`) : { description: '', steps: [], comments: [] };
+  drawTaskPanel();
+}
+
+// Сохранения идут строго по очереди: первое создаёт файл и меняет строку в tasks.md.
+function saveTask() {
+  saveQueue = saveQueue.then(() => act(async () => {
+    const { description, steps, comments } = taskDetail;
+    const result = await api('/api/tasks/detail', { line: openTask.line, raw: openTask.raw, file: openTask.file, description, steps, comments });
+    openTask.raw = result.raw;
+    openTask.file = result.file;
+  }));
+  return saveQueue;
+}
+
+function drawTaskPanel() {
+  const box = document.getElementById('task-panel');
+  if (!box) return;
+  const t = openTask;
+  const d = taskDetail;
+  const done = d.steps.filter((s) => s.done).length;
+  const percent = d.steps.length ? Math.round((done / d.steps.length) * 100) : null;
+  box.innerHTML = `
+    <p class="detail-text">${esc(t.text)}</p>
+    <div class="detail-row"><span>Раздел</span><select class="detail-select" id="t-section" aria-label="Раздел">${SECTIONS.map((n) => `<option ${n === t.section ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="detail-row"><span>Срок</span><input class="detail-select" id="t-due" type="date" aria-label="Срок" value="${esc(t.due || '')}"></div>
+    <div class="detail-row"><span>Откуда</span><span>${t.folder ? `<a href="#/r/${enc(t.folder)}">${esc(razborTitle(t.folder))}</a>` : 'Своя'}</span></div>
+    <p class="sub">Описание</p>
+    <textarea class="field detail-area" id="t-description" placeholder="Что нужно сделать и зачем" aria-label="Описание">${esc(d.description)}</textarea>
+    <p class="sub">Подшаги</p>
+    ${percent === null ? '' : `<div class="percent"><b>${percent}%</b><span>выполнено, ${done} из ${d.steps.length}</span></div>`}
+    ${d.steps.map((s, i) => `<div class="step"><label><input type="checkbox" data-step="${i}" ${s.done ? 'checked' : ''}><span class="${s.done ? 'done' : ''}">${esc(s.text)}</span></label><button type="button" class="remove" data-step-remove="${i}">Убрать</button></div>`).join('')}
+    <form id="t-step"><input class="field" placeholder="Добавить подшаг" aria-label="Новый подшаг" style="margin-top:6px"></form>
+    <p class="sub">Комментарии</p>
+    ${d.comments.map((c) => `<div class="comment"><small>${esc(c.date)}</small>${esc(c.text)}</div>`).join('')}
+    <form id="t-comment"><input class="field" placeholder="Написать комментарий" aria-label="Новый комментарий"></form>`;
+
+  const moved = (to) => act(async () => {
+    await saveQueue;
+    await api('/api/tasks/move', { line: t.line, raw: t.raw, to });
+    if (to === 'Сделано' && !taskUi.archive) taskUi.selected = null;
+    await loadTasks();
+  });
+  box.querySelector('#t-section').addEventListener('change', (e) => moved(e.target.value));
+  box.querySelector('#t-due').addEventListener('change', (e) => act(async () => {
+    await saveQueue;
+    await api('/api/tasks/due', { line: t.line, raw: t.raw, due: e.target.value });
+    await loadTasks();
+  }));
+  box.querySelector('#t-description').addEventListener('change', (e) => { d.description = e.target.value; saveTask(); });
+  box.querySelectorAll('[data-step]').forEach((c) => c.addEventListener('change', () => { d.steps[Number(c.dataset.step)].done = c.checked; drawTaskPanel(); saveTask(); }));
+  box.querySelectorAll('[data-step-remove]').forEach((b) => b.addEventListener('click', () => { d.steps.splice(Number(b.dataset.stepRemove), 1); drawTaskPanel(); saveTask(); }));
+  const adder = (id, add) => box.querySelector(id).addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = e.target.querySelector('input').value.trim();
+    if (!text) return;
+    add(text);
+    drawTaskPanel();
+    saveTask();
+    document.querySelector(`${id} input`).focus();
+  });
+  adder('#t-step', (text) => d.steps.push({ text, done: false }));
+  adder('#t-comment', (text) => d.comments.push({ date: new Date().toLocaleDateString('sv-SE'), text }));
+}
+
+// --- Копилка ---
+
+async function loadKopilka() {
+  renderKopilka(await api('/api/kopilka'));
+}
+
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Не получилось прочитать фото'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderKopilka({ items, kinds, topics: knownTopics = [] }) {
+  const draft = [...view.querySelectorAll('#put [data-draft]')].map((el) => el.value);
+  const q = kopUi.query.trim().toLowerCase();
+  const matches = (i, ignore) => (ignore === 'kind' || !kopUi.kind || i.kind === kopUi.kind) && (ignore === 'topic' || !kopUi.topic || i.topic === kopUi.topic) && (!q || `${i.text} ${i.topic} ${i.from}`.toLowerCase().includes(q));
+  const shown = items.filter((i) => matches(i));
+  const topics = [...new Set(items.map((i) => i.topic).filter(Boolean))].sort();
+  const imgSrc = (img) => (/^https?:/.test(img) ? img : `/files/${img.split('/').map(enc).join('/')}`);
+
+  view.innerHTML = `
+    <div class="grid-kop">
+      <aside class="panel side">
+        <h2>Тип</h2>
+        <button class="filter-row" data-kind="" aria-pressed="${!kopUi.kind}"><span>Все</span><b>${items.filter((i) => matches(i, 'kind')).length}</b></button>
+        ${kinds.map((k) => `<button class="filter-row" data-kind="${k}" aria-pressed="${kopUi.kind === k}"><span>${cap(k)}</span><b>${items.filter((i) => i.kind === k && matches(i, 'kind')).length}</b></button>`).join('')}
+        ${topics.length ? `<h2 style="margin-top:18px">Тема</h2><div class="filter" style="margin-top:0"><button class="chip" data-topic="" aria-pressed="${!kopUi.topic}">Все</button>${topics.map((t) => `<button class="chip" data-topic="${esc(t)}" aria-pressed="${kopUi.topic === t}">${esc(t)}</button>`).join('')}</div>` : ''}
+      </aside>
+      <div>
+        <section class="panel">
+          <input class="field" id="kop-search" placeholder="Найти в копилке" aria-label="Поиск в копилке" value="${esc(kopUi.query)}">
+          <form class="put" id="put">
+            <input class="field wide-cell" data-draft name="text" placeholder="Положить: текст или ссылка" aria-label="Текст записи">
+            <select class="field" data-draft name="kind" aria-label="Тип записи">${kinds.map((k) => `<option>${k}</option>`).join('')}</select>
+            <input class="field" data-draft name="topic" list="kop-topics" placeholder="Тема" aria-label="Тема">
+            <button class="primary">Положить</button>
+            <div class="put-product" id="put-product" hidden>
+              <input class="field" data-draft name="sku" placeholder="Артикул" aria-label="Артикул">
+              <input class="field" data-draft name="price" placeholder="Цена" aria-label="Цена">
+              <input class="field" name="photo" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Фото товара">
+            </div>
+            <datalist id="kop-topics">${knownTopics.map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+          </form>
+        </section>
+        <div class="tiles">
+          ${shown.map((i) => `<article class="tile">
+            ${i.img ? `<img src="${esc(imgSrc(i.img))}" alt="" loading="lazy">` : ''}
+            <div class="tile-body">
+              <p class="tile-kind">${esc(cap(i.kind || 'запись'))}${i.topic ? `, ${esc(i.topic)}` : ''}</p>
+              <p class="tile-text">${esc(i.text)}</p>
+              ${i.price ? `<p class="tile-price">${esc(i.price)}</p>` : ''}
+              ${i.sku ? `<p class="tile-kind" style="margin-top:4px">Артикул ${esc(i.sku)}</p>` : ''}
+              <div class="tile-foot">
+                ${i.url ? `<a class="small-btn" href="${esc(i.url)}" target="_blank" rel="noopener">Открыть</a>` : ''}
+                ${i.razbor ? `<a class="small-btn" href="#/r/${enc(i.razbor)}">Разбор</a>` : ''}
+                <button class="small-btn" data-remove-note="${esc(i.file)}">Убрать</button>
+              </div>
+            </div>
+          </article>`).join('')}
+        </div>
+        ${shown.length ? '' : `<p class="empty" style="padding:0 18px">${items.length ? 'Ничего не нашлось. Измени поиск или фильтры.' : 'Копилка пуста. Записи появятся из разборов или из строки «Положить».'}</p>`}
+      </div>
+    </div>`;
+
+  const data = { items, kinds, topics: knownTopics };
+  const form = view.querySelector('#put');
+  const drafts = [...form.querySelectorAll('[data-draft]')];
+  if (draft.length === drafts.length) drafts.forEach((el, i) => { el.value = draft[i]; });
+  const showProduct = () => { form.querySelector('#put-product').hidden = form.elements.kind.value !== 'товар'; };
+  showProduct();
+  form.elements.kind.addEventListener('change', showProduct);
+  view.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => { kopUi.kind = b.dataset.kind || null; renderKopilka(data); }));
+  view.querySelectorAll('[data-topic]').forEach((b) => b.addEventListener('click', () => { kopUi.topic = b.dataset.topic || null; renderKopilka(data); }));
+  view.querySelectorAll('[data-remove-note]').forEach((b) => b.addEventListener('click', () => act(async () => {
+    await api('/api/kopilka/archive', { file: b.dataset.removeNote });
+    await loadKopilka();
+    toast('Запись убрана в архив');
+  })));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const { text, kind, topic, sku, price, photo } = form.elements;
+    if (!text.value.trim()) return toast('Напиши текст или вставь ссылку');
+    act(async () => {
+      const file = kind.value === 'товар' ? photo.files[0] : null;
+      await api('/api/kopilka/add', { text: text.value, kind: kind.value, topic: topic.value, sku: sku.value, price: price.value, photo: file ? await readFile(file) : undefined });
+      drafts.forEach((el) => { if (el.tagName === 'INPUT') el.value = ''; });
+      await loadKopilka();
+      toast('Запись добавлена в копилку');
+    });
+  });
+  view.querySelector('#kop-search').addEventListener('input', (e) => {
+    kopUi.query = e.target.value;
+    const at = e.target.selectionStart;
+    renderKopilka(data);
+    const next = view.querySelector('#kop-search');
+    next.focus();
+    next.setSelectionRange(at, at);
+  });
+}
+
+// --- общее ---
+
+async function route() {
+  paintTabs();
+  window.scrollTo(0, 0);
+  const hash = location.hash || '#/';
+  try {
+    state = await api('/api/state');
+    if (hash.startsWith('#/r/')) await viewRazbor(decodeURIComponent(hash.slice(4)));
+    else if (hash === '#/tasks') renderTasks(await api('/api/tasks'));
+    else if (hash === '#/kopilka') renderKopilka(await api('/api/kopilka'));
+    else viewHome();
+  } catch (error) {
+    view.innerHTML = `<div class="panel"><p class="empty">${esc(error.message)}</p></div>`;
+  }
+}
+
+const viewer = document.getElementById('viewer');
+const big = viewer.querySelector('img');
+let shots = [];
+let current = 0;
+const show = (i) => {
+  current = (i + shots.length) % shots.length;
+  big.src = shots[current].src;
+  big.alt = shots[current].alt;
+};
+view.addEventListener('click', (e) => {
+  const shot = e.target.closest('.shot');
+  if (!shot) return;
+  shots = [...view.querySelectorAll('.shot img')];
+  show(shots.indexOf(shot.querySelector('img')));
+  viewer.showModal();
+});
+viewer.addEventListener('click', () => viewer.close());
+document.addEventListener('keydown', (e) => {
+  if (!viewer.open) return;
+  if (e.key === 'ArrowRight') show(current + 1);
+  if (e.key === 'ArrowLeft') show(current - 1);
+});
+
+window.addEventListener('hashchange', route);
+api('/api/state').then((first) => first.jobs.forEach((j) => { if (j.status === 'done') announced.add(j.id); })).catch(() => {}).finally(route);
+setInterval(() => {
+  if (!document.hidden && state.jobs) poll().catch(() => {});
+}, 2500);
+</script>
+</body>
+</html>
